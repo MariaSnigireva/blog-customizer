@@ -18,7 +18,7 @@ import {
 import clsx from 'clsx';
 import styles from './ArticleParamsForm.module.scss';
 import { useState, FormEvent, useEffect, useRef } from 'react';
-
+// prev предотвращает проблемы с асинхронностью 
 type ArticleParamsFormProps = {
   setArticleFormState: (state: ArticleStateType) => void;
 };
