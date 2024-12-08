@@ -21,133 +21,147 @@ import { useState, FormEvent, useEffect, useRef } from 'react';
 // prev предотвращает проблемы с асинхронностью
 type ArticleParamsFormProps = {
 	setArticleFormState: (state: ArticleStateType) => void;
-};
+}
 
-export const ArticleParamsForm = ({
-	setArticleFormState,
-}: ArticleParamsFormProps) => {
-	const [isFormVisible, setIsFormVisible] = useState(false);
+export const ArticleParamsForm = ({setArticleFormState}: ArticleParamsFormProps) => {
+	const [isFormOpen, setIsFormOpen] = useState(false);
 
 	// функция для переключения видимости формы
-	const toggleFormVisibility = () => {
-		setIsFormVisible((prev) => !prev);
-	};
+	const toggleForm = () => {
+		setIsFormOpen(!isFormOpen);
+	}
 
-	// для хранения данных формы
 	const [formData, setFormData] = useState({
-		fontFamily: defaultArticleState.fontFamilyOption,
-		fontSize: defaultArticleState.fontSizeOption,
+		fontFamilyOption: defaultArticleState.fontFamilyOption,
+		fontSizeOption: defaultArticleState.fontSizeOption,
 		fontColor: defaultArticleState.fontColor,
 		backgroundColor: defaultArticleState.backgroundColor,
-		contentWidth: defaultArticleState.contentWidth,
+		contentWidthArr: defaultArticleState.contentWidth
 	});
+	const setFontFamily = (event: OptionType) => {
+		setFormData({...formData, fontFamilyOption: event});
+	}
 
-	// для обновления значений формы
-	const updateFormData = (key: keyof typeof formData, value: OptionType) => {
-		setFormData((prev) => ({ ...prev, [key]: value }));
-	};
+	const setFontSize = (event: OptionType) => {
+		setFormData({...formData, fontSizeOption: event});
+	}
+
+	const setFontColor = (event: OptionType) => {
+		setFormData({...formData, fontColor: event});
+	}
+
+	const setBackgroundColor = (event: OptionType) => {
+		setFormData({...formData, backgroundColor: event});
+	}
+
+	const setContentWidth = (event: OptionType) => {
+		setFormData({...formData, contentWidthArr: event});
+	}
+
 
 	// сброс данных формы
 	const resetFormData = (event: FormEvent) => {
 		event.preventDefault();
 		setArticleFormState(defaultArticleState);
 		setFormData({
-			fontFamily: defaultArticleState.fontFamilyOption,
-			fontSize: defaultArticleState.fontSizeOption,
+			fontFamilyOption: defaultArticleState.fontFamilyOption,
+			fontSizeOption: defaultArticleState.fontSizeOption,
 			fontColor: defaultArticleState.fontColor,
 			backgroundColor: defaultArticleState.backgroundColor,
-			contentWidth: defaultArticleState.contentWidth,
+			contentWidthArr: defaultArticleState.contentWidth
 		});
-		setIsFormVisible(false);
-	};
+		setIsFormOpen(false);
+	}
 
 	//  отправка формы
 	const handleSubmit = (event: FormEvent) => {
 		event.preventDefault();
-		setArticleFormState(formData);
-		setIsFormVisible(false);
-	};
+		setArticleFormState({
+			fontFamilyOption: formData.fontFamilyOption,
+			fontSizeOption: formData.fontSizeOption,
+			fontColor: formData.fontColor,
+			backgroundColor: formData.backgroundColor,
+			contentWidth: formData.contentWidthArr
+		});
+		setIsFormOpen(false);
+	}
 
 	const formRef = useRef<HTMLDivElement>(null);
 
-	useEffect(() => {
-		const handleClickOutside = (event: MouseEvent): void => {
-			if (formRef.current && !formRef.current.contains(event.target as Node)) {
-				setIsFormVisible(false);
+		useEffect(() => {
+			const handleMouseDown = (event: MouseEvent): void => {
+				if(formRef.current && !formRef.current.contains(event.target as Node)) {
+					setIsFormOpen(false);
+				}
+			};
+
+			const handleEscapeDown = (event: KeyboardEvent) => {
+				if (event.key === 'Escape') {
+					setIsFormOpen(false);
+				}
 			}
-		};
 
-		const handleEscapePress = (event: KeyboardEvent) => {
-			if (event.key === 'Escape') {
-				setIsFormVisible(false);
+			if(isFormOpen) {
+				document.addEventListener('mousedown', handleMouseDown);
+				document.addEventListener('keydown', handleEscapeDown);
+			} else {
+				document.removeEventListener('mousedown', handleMouseDown);
+				document.removeEventListener('keydown', handleEscapeDown);
 			}
-		};
 
-		if (isFormVisible) {
-			document.addEventListener('mousedown', handleClickOutside);
-			document.addEventListener('keydown', handleEscapePress);
-		}
+			return () => {
+				document.removeEventListener('mousedown', handleMouseDown);
+				document.removeEventListener('keydown', handleEscapeDown);
+			}
 
-		return () => {
-			document.removeEventListener('mousedown', handleClickOutside);
-			document.removeEventListener('keydown', handleEscapePress);
-		};
-	}, [isFormVisible]);
+		}, [isFormOpen]);
 
-	return (
-		<>
-			{/* Кнопка для переключения видимости формы */}
-			<ArrowButton isOpen={isFormVisible} onClick={toggleFormVisibility} />
-			<aside
-				className={clsx(styles.container, {
-					[styles.container_open]: isFormVisible,
-				})}
-				ref={formRef}>
-				<form
-					className={styles.form}
-					onSubmit={handleSubmit}
-					onReset={resetFormData}>
-					<Text size={31} weight={800} uppercase>
-						Задайте параметры
-					</Text>
-					<Select
-						selected={formData.fontFamily}
-						options={fontFamilyOptions}
-						title='Шрифт'
-						onChange={(option) => updateFormData('fontFamily', option)} // изменение шрифта
-					/>
-					<RadioGroup
-						selected={formData.fontSize}
-						options={fontSizeOptions}
-						name='Размер Шрифта'
-						title='Размер Шрифта'
-						onChange={(option) => updateFormData('fontSize', option)} // изменение размера шрифта
-					/>
-					<Select
-						selected={formData.fontColor}
-						options={fontColors}
-						title='Цвет Шрифта'
-						onChange={(option) => updateFormData('fontColor', option)} // изменение цвета шрифта
-					/>
-					<Separator />
-					<Select
-						selected={formData.backgroundColor}
-						options={backgroundColors}
-						title='Цвет Фона'
-						onChange={(option) => updateFormData('backgroundColor', option)} // изменение цвета фона
-					/>
-					<Select
-						selected={formData.contentWidth}
-						options={contentWidthArr}
-						title='Ширина Контента'
-						onChange={(option) => updateFormData('contentWidth', option)} // изменение ширины контента
-					/>
-					<div className={styles.bottomContainer}>
-						<Button title='Сбросить' htmlType='reset' type='clear' />
-						<Button title='Применить' htmlType='submit' type='apply' />
-					</div>
-				</form>
-			</aside>
-		</>
-	);
-};
+		return (
+			<>
+				<ArrowButton isOpen={isFormOpen} onClick={toggleForm} />
+				<aside className={clsx(styles.container, { [styles.container_open]: isFormOpen })} ref={formRef}>
+					<form className={styles.form} onSubmit={handleSubmit} onReset={resetFormData}>
+						<Text size={31} weight={800} uppercase>
+							Задайте параметры
+						</Text>
+						<Select
+						 selected={formData.fontFamilyOption}
+						 options={fontFamilyOptions}
+						 title='Шрифт'
+						 onChange={setFontFamily}
+						/>
+						<RadioGroup
+						 selected={formData.fontSizeOption}
+						 options={fontSizeOptions}
+						 name='Размер Шрифта'
+						 title='Размер Шрифта'
+						 onChange={setFontSize}
+						/>
+						<Select
+						 selected={formData.fontColor}
+						 options={fontColors}
+						 title='Цвет Шрифта'
+						 onChange={setFontColor}
+						/>
+						<Separator />
+						<Select
+						 selected={formData.backgroundColor}
+						 options={backgroundColors}
+						 title='Цвет Фона'
+						 onChange={setBackgroundColor}
+						/>
+						<Select
+						 selected={formData.contentWidthArr}
+						 options={contentWidthArr}
+						 title='Ширина Контента'
+						 onChange={setContentWidth}
+						/>
+						<div className={styles.bottomContainer}>
+							<Button title='Сбросить' htmlType='reset' type='clear' />
+							<Button title='Применить' htmlType='submit' type='apply' />
+						</div>
+					</form>
+				</aside>
+			</>
+		);
+	};
